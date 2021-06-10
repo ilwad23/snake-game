@@ -21,11 +21,11 @@ def main():
             if event.type == pygame.QUIT:
                 crashed = True
 
-    # Background color
-    SCREEN.fill(BG_COLOR)
+        # Background color
+        SCREEN.fill(BG_COLOR)
 
-    # updates the screen
-    update()
+        # updates the screen
+        update()
 
     pygame.quit()
 
