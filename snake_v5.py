@@ -1,7 +1,7 @@
 import pygame
 from pygame.display import update
 from random import randint
-import time as x
+import time as t
 
 # Configs and Veriables
 
@@ -41,7 +41,7 @@ def add_body():
     global snake, score
     # adds a new square to the array (snake) to join the body
     new_part = pygame.Rect(
-        (SNAKE_HEAD.x, SNAKE_HEAD.y),
+        (snake[-1].x, snake[-1].y),
         (SIZE_FOR_SNAKE, SIZE_FOR_SNAKE),
     )
     snake.append(new_part)
@@ -59,9 +59,9 @@ def collision_detector():
 
         for i in snake:
             while i.colliderect(foodcopy):
-                print('caught',r[0])
+                print("caught", r[0])
                 r = [(randint(0, WIDTH - food.width), randint(0, HEIGHT - food.width))]
-                print('changed',r[0])
+                print("changed", r[0])
                 foodcopy = pygame.Rect((r[0]), (SIZE_FOR_FOOD, SIZE_FOR_FOOD))
         return r
     return [(food.x, food.y)]
@@ -101,6 +101,8 @@ def game_over():
     for i in range(len(snake)):
         if i != 0:
             if SNAKE_HEAD.colliderect(snake[i]):
+                copysnake = snake[1:]
+                print(SNAKE_HEAD.collidedictall(copysnake))
                 GAME_OVER = font.render("Gameover", True, (0, 0, 0))
                 SCREEN.blit(GAME_OVER, (HALFW - 10, HALFH))
                 snake = [pygame.Rect((HALFW, HALFH), (SIZE_FOR_SNAKE, SIZE_FOR_SNAKE))]
@@ -124,17 +126,17 @@ def display_on_screen():
     if dir != "p":
         for i in range(len(snake) - 1, -1, -1):
             if i != 0:
-                p = snake[i - 1]
-                snake[i].x = p.x
-                snake[i].y = p.y
+                snake[i].update(
+                    snake[i - 1].x, snake[i - 1].y, SIZE_FOR_SNAKE, SIZE_FOR_SNAKE
+                )
     else:
         PAUSE = font.render("Pause", True, (0, 0, 0))
         SCREEN.blit(PAUSE, (HALFW - 100, HALFH))
     SNAKE_HEAD.move_ip(TURN[dir])
     for i, p in enumerate(snake):
-        pygame.draw.rect(SCREEN, (37, 54, 44), p)
-    pygame.draw.rect(SCREEN, (0, 0, 0), SNAKE_HEAD)
-    x.sleep(0.5)
+        color = (0, 0, 0) if i == 0 else (37, 54, 44)
+        pygame.draw.rect(SCREEN, color, p)
+    t.sleep(0.5)
     # updates the screen
     update()
 
