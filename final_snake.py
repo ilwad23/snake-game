@@ -12,20 +12,20 @@ class Food:
         self.snake = snake
         self.x = self.snake.starting + 200
         self.y = self.snake.starting
+        self.block = 800-size
         self.size = size
         self.color = (250, 0, 10)
         self.rectangle = pygame.Rect(self.x, self.y, self.size, self.size)
 
     def update_position(self):
-        # self.rectangle.update(randint(0,800),randint(0,800),self.size,self.size)
         foodcopy = pygame.Rect(
-            (randint(0, 800), randint(0, 800)), (self.size, self.size)
+            (randint(0, self.block), randint(0, self.block)), (self.size, self.size)
         )
         for i in self.snake.rectangles:
             while i.colliderect(foodcopy):
                 print("caught", foodcopy)
                 foodcopy = pygame.Rect(
-                    (randint(0, 800), randint(0, 800)), (self.size, self.size)
+                    (randint(0, self.block), randint(0, self.block)), (self.size, self.size)
                 )
                 print("changed", foodcopy)
         self.rectangle = foodcopy
@@ -35,7 +35,7 @@ class Food:
 
 
 class Snake:
-    def __init__(self, screen, screen_size, size=40):
+    def __init__(self, screen, screen_size, size=30):
         self.screen = screen
         self.screen_size = screen_size
         self.size = (size, size)
@@ -44,31 +44,33 @@ class Snake:
         self.head = pygame.Rect((self.starting, self.starting), self.size)
         self.rectangles = [self.head]
         self.color = (37, 54, 44)
-        self.velocity = self.size[0]
+        self.velocity = 0.5
         self.turns = {
-            "right": [self.velocity, 0],
-            "left": [-self.velocity, 0],
-            "up": [0, -self.velocity],
-            "down": [0, self.velocity],
+            "right": [size, 0],
+            "left": [-size, 0],
+            "up": [0, -size],
+            "down": [0, size],
             "p": [0, 0],
         }
         self.direction = "right"
+        with open("best_score.txt", "r") as f:
+            self.best_score = int(f.read())
         self.score = 0
-
-    def game_over(self):
-        for i in range(len(self.rectangles)):
-            if i != 0:
-                if self.head.colliderect(self.rectangles[i]):
-                    print('gameover')
-                    self.__init__(self.screen, self.screen_size)
-                    break
-
-    def add(self):
+    
+    def update_best_score(self):
+        with open("best_score.txt", "w") as f:
+            if self.score > self.best_score:
+                f.write(str(self.score))
+                self.best_score = self.score
+            else: f.write(str(self.best_score))
+    
+    def add(self): 
         self.score += self.score // 10 + 1
+        self.velocity -= 0.0009
         self.rectangles.append(
             pygame.Rect((self.rectangles[-1].x, self.rectangles[-1].y), self.size)
         )
-        
+
     def controls(self):
         key = pygame.key.get_pressed()
         # the snake will move in different direction according the arrows pressed
@@ -115,12 +117,19 @@ class Game:
         self.color = color
         self.screen = pygame.display.set_mode((self.screen_size, self.screen_size))
         pygame.display.set_caption(self.title)
-        self.font = pygame.font.Font("freesansbold.ttf", 45)
+        self.font = pygame.font.Font("freesansbold.ttf", 35)
         self.crashed = False
         self.clock = pygame.time.Clock()
         self.snake = Snake(self.screen, self.screen_size)
         self.food = Food(self.screen, self.snake)
         pass
+
+    def game_over(self):
+        for i in range(len(self.snake.rectangles)):
+            if i != 0:
+                if self.snake.head.colliderect(self.snake.rectangles[i]):
+                    self.__init__()
+                    break
 
     def collision_with_food(self):
         if self.snake.head.colliderect(self.food.rectangle):
@@ -138,10 +147,14 @@ class Game:
             # background
             self.screen.fill(self.color)
             # score
-            text = self.font.render(f"Score: {self.snake.score}", True, (0, 0, 0))
-            self.screen.blit(text, (5, 5))
+            score_text = self.font.render(f"Score: {self.snake.score}", True, (0, 0, 0))
+            self.screen.blit(score_text, (5, 5))
+            # best score
+            self.snake.update_best_score()
+            best_score_text = self.font.render(f"Best Score: {self.snake.best_score}", True, (0, 0, 0))
+            self.screen.blit(best_score_text, (self.screen_size-300, 5))
             # checking
-            self.snake.game_over()
+            self.game_over()
             self.collision_with_food()
             # updating
             # print(self.snake.rectangles)
@@ -150,7 +163,7 @@ class Game:
             self.food.draw()
             self.snake.draw()
             # updating the screen
-            time.sleep(0.5)
+            time.sleep(self.snake.velocity)
             self.clock.tick(120)
             update()
 
